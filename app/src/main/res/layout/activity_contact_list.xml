@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".ContactList">
 
     <Button
         android:id="@+id/button8"
@@ -37,7 +38,8 @@
         android:layout_marginTop="20dp"
         android:text="Regresar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:onClick="openMainWindow"/>
 
     <ListView
         android:id="@+id/listView"
