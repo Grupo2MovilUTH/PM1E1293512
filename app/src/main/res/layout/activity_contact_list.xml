@@ -7,30 +7,6 @@
     tools:context=".ContactList">
 
     <Button
-        android:id="@+id/button8"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="30dp"
-        android:text="Actualizar Contacto"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button6" />
-
-    <SearchView
-        android:id="@+id/searchView"
-        android:layout_width="398dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="20dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.518"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button3" />
-
-    <Button
         android:id="@+id/button3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -41,11 +17,23 @@
         app:layout_constraintTop_toTopOf="parent"
         android:onClick="openMainWindow"/>
 
+    <SearchView
+        android:id="@+id/searchView"
+        android:layout_width="0dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button3" />
+
     <ListView
         android:id="@+id/listView"
-        android:layout_width="410dp"
-        android:layout_height="408dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:layout_marginTop="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/button5"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/searchView" />
@@ -71,6 +59,19 @@
         app:layout_constraintTop_toBottomOf="@+id/listView" />
 
     <Button
+        android:id="@+id/button8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="30dp"
+        android:text="Actualizar Contacto"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button6"
+        android:onClick="updateContact" />
+
+    <Button
         android:id="@+id/button7"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -80,5 +81,9 @@
         android:text="Eliminar Contacto"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button5" />
+        app:layout_constraintTop_toBottomOf="@+id/button5"
+        android:onClick="deleteContact" />
+
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>
