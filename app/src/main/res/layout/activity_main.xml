@@ -21,14 +21,14 @@
     <!-- Botón + -->
     <Button
         android:id="@+id/buttonAdd"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="63dp"
+        android:layout_height="46dp"
+        android:layout_marginStart="8dp"
         android:text="+"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintStart_toEndOf="@id/spinner"
-        app:layout_constraintTop_toTopOf="@id/spinner"
-        android:layout_marginStart="8dp"/>
+        app:layout_constraintTop_toTopOf="@id/spinner" />
 
     <!-- TextView "Pais" -->
     <TextView
@@ -130,14 +130,14 @@
 
     <Button
         android:id="@+id/buttonSelectPhoto"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="148dp"
+        android:layout_height="41dp"
         android:layout_marginTop="8dp"
+        android:onClick="selectPhoto"
         android:text="Seleccionar Foto"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/buttonAdd"
         app:layout_constraintTop_toTopOf="@+id/buttonAdd"
-        android:onClick="selectPhoto"
         tools:ignore="OnClick" />
 
     <!-- Botón "Salvar contacto" -->

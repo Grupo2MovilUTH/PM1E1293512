@@ -20,12 +20,14 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
-import com.google.i18n.phonenumbers.PhoneNumberMatch;
-import com.google.i18n.phonenumbers.PhoneNumberUtil;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+
+import com.google.i18n.phonenumbers.PhoneNumberMatch;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,41 +39,42 @@ public class ContactList extends AppCompatActivity {
     private SearchView searchView;
     private ArrayAdapter<String> adapter;
     private ArrayList<String> contactList;
-    private int selectedPosition = -1; // Variable para mantener la posición del contacto seleccionado
-    private ImageView imageViewContact; // Referencia al ImageView para la imagen del contacto
+    private int selectedPosition = -1;
+    private static final long DOUBLE_CLICK_TIME_DELTA = 500;
+    private long lastClickTime = 0;
 
-    // para verificacion de permisos de llamada
+    // para verificación de permisos de llamada
     private static final String CALL_PERMISSION = Manifest.permission.CALL_PHONE;
     private static final int PERMISSION_REQ_CODE = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState); // Llamar al método onCreate de AppCompatActivity
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_list);
 
         dbHelper = new ContactDbHelper(this);
         listView = findViewById(R.id.listView);
         searchView = findViewById(R.id.searchView);
-        imageViewContact = findViewById(R.id.imageViewContact);
 
         loadContacts();
 
-        // Configurar listener para el ListView
+        // Configurar el ListView para manejar clics en los contactos
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Actualizar la posición seleccionada y resaltar visualmente
-                selectedPosition = position;
-                listView.setItemChecked(position, true);
-                // llamamos solo si tenemos permiso
-                if (checkPermission()) {
-                    System.out.println("###CALL PERMISSION GRANTED###");
-                    String number = getPhoneNumber(position); // obtener el numero de telefono de la lista
-                    callContact(number); // realizar la llamada
+                long clickTime = System.currentTimeMillis();
+
+                if (clickTime - lastClickTime < DOUBLE_CLICK_TIME_DELTA) {
+                    // Doble clic detectado
+                    String number = getPhoneNumber(position);
+                    callContact(number);
                 } else {
-                    System.out.println("###CALL PERMISSION NOT GRANTED###ERROR###");
-                    requestPermission();
+                    // Clic único detectado
+                    selectedPosition = position;
+                    listView.setItemChecked(position, true);
                 }
+
+                lastClickTime = clickTime;
             }
         });
 
@@ -88,71 +91,57 @@ public class ContactList extends AppCompatActivity {
             }
         });
 
-        // Configurar el botón "Ver Imagen"
-        findViewById(R.id.button6).setOnClickListener(new View.OnClickListener() {
+        // Configurar el botón "Compartir"
+        findViewById(R.id.button5).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (selectedPosition != -1) {
                     String selectedContact = adapter.getItem(selectedPosition);
                     if (selectedContact != null) {
-                        showContactImage(selectedContact);
+                        shareContact(selectedContact);
                     }
                 } else {
-                    Toast.makeText(ContactList.this, "Seleccione un contacto para ver la imagen", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ContactList.this, "Seleccione un contacto para compartir", Toast.LENGTH_SHORT).show();
                 }
             }
         });
 
-    }
 
+
+        // Solicitar permisos si no están concedidos
+        if (!checkPermission()) {
+            requestPermission();
+        }
+    }
 
     private boolean checkPermission() {
-        if(ActivityCompat.checkSelfPermission(this,CALL_PERMISSION)
-                == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    private String getPhoneNumber(int position) {
-        String itemValue = (String) listView.getItemAtPosition(position);
-        Iterator<PhoneNumberMatch> existsPhone=PhoneNumberUtil.getInstance()
-                .findNumbers(itemValue, "IN").iterator();
-
-        while (existsPhone.hasNext()){
-            String num =String.valueOf(existsPhone.next().number().getNationalNumber());
-            return num;
-        }
-        Log.e("ERROR", "getPhoneNumber: No phone number found");
-        return "+50412345678"; // dummy number
-    }
-    private void callContact(String phone) {
-        Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone));
-        startActivity(intent);
+        return ActivityCompat.checkSelfPermission(this, CALL_PERMISSION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this, CALL_PERMISSION)) {
-
+            // Explicar al usuario por qué se necesitan los permisos
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("Esta aplicacion requiere permisos para realizar llamadas")
-                    .setTitle("Permiso requerido")
+            builder.setMessage("Esta aplicación requiere permisos para realizar llamadas.")
+                    .setTitle("Permiso necesario")
                     .setCancelable(false)
                     .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            ActivityCompat.requestPermissions(ContactList.this, new String[]{CALL_PERMISSION},
-                                    PERMISSION_REQ_CODE);
+                            ActivityCompat.requestPermissions(ContactList.this, new String[]{CALL_PERMISSION}, PERMISSION_REQ_CODE);
                             dialog.dismiss();
                         }
-                    }).setNegativeButton("Cancel",((dialog, which) -> dialog.dismiss()));
+                    }).setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
 
             builder.show();
-
         } else {
-            ActivityCompat.requestPermissions(this, new String[]{CALL_PERMISSION},
-                    PERMISSION_REQ_CODE);
+            // Solicitar permisos directamente
+            ActivityCompat.requestPermissions(this, new String[]{CALL_PERMISSION}, PERMISSION_REQ_CODE);
         }
     }
 
@@ -160,29 +149,55 @@ public class ContactList extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if(requestCode == PERMISSION_REQ_CODE) {
-            if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                System.out.println("Permission granted. You can use the API now.");
+        if (requestCode == PERMISSION_REQ_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permiso para realizar llamadas concedido", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permiso para realizar llamadas denegado", Toast.LENGTH_SHORT).show();
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(this, CALL_PERMISSION)) {
+                    // El usuario marcó "No volver a preguntar", dirigir a configuraciones de la aplicación
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setMessage("Para realizar llamadas, habilite los permisos desde los ajustes de la aplicación.")
+                            .setTitle("Solicitud de permiso")
+                            .setCancelable(false)
+                            .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setPositiveButton("Configuraciones", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                                    intent.setData(uri);
+                                    startActivity(intent);
+                                }
+                            });
+
+                    builder.show();
+                }
             }
-        } else if (!ActivityCompat.shouldShowRequestPermissionRationale(this, CALL_PERMISSION)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("No se pueden realizar llamadas, el permiso fue denegado." +
-                            " Por favor habilite los permisos desde los ajustes del dispositivo.")
-                    .setTitle("Solicitud de permiso")
-                    .setCancelable(false)
-                    .setNegativeButton("Cancel",(dialog, which) -> dialog.dismiss())
-                    .setPositiveButton("Settings", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Intent intent = new Intent(Settings.ACTION_APPLICATION_SETTINGS);
-                            Uri uri = Uri.fromParts("package", getPackageName(), null);
-                            intent.setData(uri);
-                            startActivity(intent);
-                            dialog.dismiss();
-                        }
-                    });
-            builder.show();
         }
+    }
+
+    private String getPhoneNumber(int position) {
+        String itemValue = (String) listView.getItemAtPosition(position);
+        Iterator<PhoneNumberMatch> existsPhone = PhoneNumberUtil.getInstance()
+                .findNumbers(itemValue, "IN").iterator();
+
+        while (existsPhone.hasNext()) {
+            String num = String.valueOf(existsPhone.next().number().getNationalNumber());
+            return num;
+        }
+        Log.e("ERROR", "getPhoneNumber: No se encontró número de teléfono");
+        return "+50412345678"; // número ficticio
+    }
+
+    private void callContact(String phone) {
+        Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + phone));
+        startActivity(intent);
     }
 
     private void loadContacts() {
@@ -200,12 +215,10 @@ public class ContactList extends AppCompatActivity {
 
         cursor.close();
 
-        // Verificar si el adaptador ya está inicializado para evitar duplicación
         if (adapter == null) {
             adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_activated_1, contactList);
             listView.setAdapter(adapter);
         } else {
-            // Si el adaptador ya está inicializado, simplemente notificar cambios
             adapter.clear();
             adapter.addAll(contactList);
             adapter.notifyDataSetChanged();
@@ -226,6 +239,46 @@ public class ContactList extends AppCompatActivity {
             Toast.makeText(this, "Seleccione un contacto para actualizar", Toast.LENGTH_SHORT).show();
         }
     }
+
+    public void showContactImage(View view) {
+        if (selectedPosition != -1) {
+            String selectedContact = adapter.getItem(selectedPosition);
+            if (selectedContact != null) {
+                byte[] imageBytes = dbHelper.getContactImageBytes(selectedContact);
+                if (imageBytes != null) {
+                    Bitmap contactImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+                    showImageDialog(contactImage);
+                } else {
+                    Toast.makeText(this, "Imagen no disponible para este contacto", Toast.LENGTH_SHORT).show();
+                }
+            }
+        } else {
+            Toast.makeText(this, "Seleccione un contacto para ver la imagen", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showImageDialog(Bitmap imageBitmap) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_image_preview, null);
+        ImageView imageView = dialogView.findViewById(R.id.imageViewPreview);
+
+        if (imageBitmap != null) {
+            imageView.setImageBitmap(imageBitmap);
+        } else {
+            imageView.setImageResource(R.drawable.default_image); // Imagen por defecto si no hay imagen disponible
+        }
+
+        builder.setView(dialogView)
+                .setPositiveButton("Cerrar", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                })
+                .show();
+    }
+
+
 
     public void deleteContact(View view) {
         if (selectedPosition != -1) {
@@ -336,37 +389,12 @@ public class ContactList extends AppCompatActivity {
         builder.show();
     }
 
-    private void showContactImage(String contact) {
-        byte[] imageBytes = dbHelper.getContactImage(contact);
-
-        if (imageBytes != null) {
-            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Imagen del contacto");
-
-            ImageView imageView = new ImageView(this);
-            imageView.setImageBitmap(bitmap);
-
-            builder.setView(imageView);
-            builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-            builder.show();
-        } else {
-            Toast.makeText(this, "No se encontró imagen para este contacto", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-
-
-    private void shareContact(String contact) {
+    private void shareContact(String selectedContact) {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TEXT, contact);
+        intent.putExtra(Intent.EXTRA_TEXT, selectedContact);
         startActivity(Intent.createChooser(intent, "Compartir contacto con"));
     }
+
 }
+

@@ -12,7 +12,7 @@ import android.util.Log;
 public class ContactDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "contacts.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Nombre de la tabla y columnas
     public static final String TABLE_NAME = "contacts";
@@ -99,25 +99,29 @@ public class ContactDbHelper extends SQLiteOpenHelper {
         db.close();
     }
     @SuppressLint("Range")
-    public byte[] getContactImage(String contact) {
+    public byte[] getContactImageBytes(String contactName) {
         SQLiteDatabase db = this.getReadableDatabase();
         byte[] imageBytes = null;
 
+        String[] projection = {ContactContract.ContactEntry.COLUMN_NAME_IMAGE};
+        String selection = ContactContract.ContactEntry.COLUMN_NAME_NAME + " = ?";
+        String[] selectionArgs = {contactName};
+
         Cursor cursor = db.query(
                 ContactContract.ContactEntry.TABLE_NAME,
-                new String[]{ContactContract.ContactEntry.COLUMN_NAME_IMAGE},
-                ContactContract.ContactEntry.COLUMN_NAME_NAME + " = ?",
-                new String[]{contact},
+                projection,
+                selection,
+                selectionArgs,
                 null,
                 null,
                 null
         );
 
-        if (cursor.moveToFirst()) {
+        if (cursor != null && cursor.moveToFirst()) {
             imageBytes = cursor.getBlob(cursor.getColumnIndex(ContactContract.ContactEntry.COLUMN_NAME_IMAGE));
+            cursor.close();
         }
 
-        cursor.close();
         return imageBytes;
     }
 

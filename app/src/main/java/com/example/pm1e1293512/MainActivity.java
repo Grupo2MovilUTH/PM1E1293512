@@ -21,18 +21,16 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.pm1e1293512.ContactDbHelper;
-import com.example.pm1e1293512.ContactList;
-import com.example.pm1e1293512.R;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
     private Spinner spinner;
     private ArrayAdapter<String> spinnerAdapter;
     private ArrayList<String> countries;
+    private HashMap<String, String> countryCodes;
 
     private ImageView imageViewSelected;
     private Uri selectedImageUri;
@@ -43,12 +41,24 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         countries = new ArrayList<>();
-        countries.add("USA"); // Initial country
-        // Add more initial countries if needed
+        countries.add("USA");
+        countries.add("Canada");
+        countries.add("Mexico");
+        countries.add("Alaska"); // Asumiendo el mismo código que USA
+        countries.add("China");
+        countries.add("Honduras");
 
         spinner = findViewById(R.id.spinner);
         spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, countries);
         spinner.setAdapter(spinnerAdapter);
+
+        countryCodes = new HashMap<>();
+        countryCodes.put("USA", "+1");
+        countryCodes.put("Canada", "+1");
+        countryCodes.put("Mexico", "+52");
+        countryCodes.put("Alaska", "+1"); // Asumiendo el mismo código que USA
+        countryCodes.put("China", "+86");
+        countryCodes.put("Honduras", "+504");
 
         Button buttonAdd = findViewById(R.id.buttonAdd);
         buttonAdd.setOnClickListener(new View.OnClickListener() {
@@ -122,9 +132,14 @@ public class MainActivity extends AppCompatActivity {
         if (phone.isEmpty()) {
             Toast.makeText(this, "Debe escribir un teléfono", Toast.LENGTH_SHORT).show();
             return;
-        } else if (!phone.contains("+504")) {
-            phone = "+504" + phone;
         }
+
+        String selectedCountry = spinner.getSelectedItem().toString();
+        String countryCode = countryCodes.get(selectedCountry);
+        if (countryCode != null && !phone.startsWith(countryCode)) {
+            phone = countryCode + phone.substring(1); // Mantener el resto del número
+        }
+
 
         if (note.isEmpty()) {
             Toast.makeText(this, "Debe escribir una nota", Toast.LENGTH_SHORT).show();
@@ -133,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Save to database
         ContactDbHelper dbHelper = new ContactDbHelper(this);
-        long contactId = dbHelper.addContact(name, phone, note, selectedImageUri); // Aquí pasas también la URI de la imagen
+        long contactId = dbHelper.addContact(name, phone, note, selectedImageUri);
 
         if (contactId != -1) {
             Toast.makeText(this, "Guardado exitosamente", Toast.LENGTH_SHORT).show();
